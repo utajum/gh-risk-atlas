@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <rect width="32" height="32" rx="8" fill="#0a0b0e"/>
+  <polygon points="16,4 28,10 28,22 16,28 4,22 4,10" fill="none" stroke="#ff2d55" stroke-width="2"/>
+  <polygon points="16,9 23,13 23,21 16,25 9,21 9,13" fill="#ff2d5522"/>
+  <text x="16" y="21" text-anchor="middle" font-family="system-ui,sans-serif" font-size="12" font-weight="900" fill="#ff2d55">R</text>
+</svg>

@@ -1,0 +1,23 @@
+---
+import Base from '../layouts/Base.astro';
+import { ALL_REPOS, STATS } from '../data/repos';
+import Explorer from '../components/Explorer';
+---
+
+<Base
+  title="Repository Explorer - Search & Filter 3,873 Leaked GitHub Repos by Risk"
+  description="Search, sort, and filter all 3,873 leaked GitHub-internal repositories by severity score, tier (S–E), category, org, and archive size. Each entry scored by Claude Opus 4.7 with rationale explaining the risk."
+  keywords="search github repositories, filter by security risk, leaked repo database, severity tier filter, github internal code search, security triage tool, repository risk explorer"
+>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-10">
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold mb-2">Repository Explorer</h1>
+      <p style="color:#8b949e;">
+        Search, filter, and sort all <strong style="color:#e6edf3;"
+          >{STATS.total.toLocaleString()}</strong
+        > repositories. Scored by Claude Opus 4.7 max thinking mode.
+      </p>
+    </div>
+    <Explorer repos={ALL_REPOS} stats={STATS} client:load />
+  </div>
+</Base>

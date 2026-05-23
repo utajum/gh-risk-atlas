@@ -1,0 +1,180 @@
+---
+export interface Props {
+  title?: string;
+  description?: string;
+  ogImage?: string;
+  keywords?: string;
+  type?: 'website' | 'article';
+}
+
+const SITE_URL = Astro.site?.origin || 'https://github-risk-atlas.netlify.app';
+const SITE_NAME = 'GitHub Risk Atlas';
+
+const {
+  title = SITE_NAME,
+  description = 'AI-generated security severity ranking of 3,873 leaked GitHub-internal repositories. Scored by Claude Opus 4.7 (max thinking mode) - ranked by how much source code would help an attacker steal customer data.',
+  ogImage = '/og.png',
+  keywords = 'github security, leaked repositories, vulnerability ranking, AI security analysis, Claude Opus, repository risk, cybersecurity, source code analysis, data theft, attack surface',
+  type = 'website',
+} = Astro.props;
+
+const fullTitle = title === SITE_NAME ? title : `${title} - ${SITE_NAME}`;
+const canonicalURL = new URL(Astro.url.pathname, SITE_URL);
+const ogImageAbs = new URL(ogImage, SITE_URL);
+
+// JSON-LD structured data
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Dataset',
+  name: SITE_NAME,
+  description,
+  url: SITE_URL,
+  keywords: keywords.split(', '),
+  creator: {
+    '@type': 'SoftwareApplication',
+    name: 'Claude Opus 4.7',
+    description:
+      'Anthropic large language model with max thinking mode enabled',
+  },
+  license: 'https://creativecommons.org/licenses/by-nc/4.0/',
+  variableMeasured:
+    'Security severity score (0-100) for customer data theft risk',
+  measurementTechnique:
+    'AI-generated scoring using calibrated rubric and anchors',
+  size: '3873 repositories',
+};
+---
+
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0a0b0e" />
+
+    <!-- Primary SEO -->
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <meta name="keywords" content={keywords} />
+    <meta name="author" content="GitHub Risk Atlas" />
+    <meta
+      name="robots"
+      content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"
+    />
+    <link rel="canonical" href={canonicalURL} />
+
+    <!-- Open Graph (Facebook, LinkedIn, Slack, Discord) -->
+    <meta property="og:site_name" content={SITE_NAME} />
+    <meta property="og:type" content={type} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:image" content={ogImageAbs} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="GitHub Risk Atlas - severity ranking of 3,873 leaked GitHub-internal repositories"
+    />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter / X card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageAbs} />
+    <meta
+      name="twitter:image:alt"
+      content="GitHub Risk Atlas severity ranking"
+    />
+
+    <!-- Favicons -->
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <!-- Sitemap -->
+    <link rel="sitemap" href="/sitemap-index.xml" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- JSON-LD structured data -->
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+
+    <style is:global>
+      @import '../styles/global.css';
+    </style>
+  </head>
+
+  <body class="min-h-screen" style="background:#0a0b0e; color:#e6edf3;">
+    <!-- Nav -->
+    <nav
+      style="background:rgba(10,11,14,0.9); border-bottom:1px solid #21262d; backdrop-filter:blur(12px);"
+      class="sticky top-0 z-50"
+    >
+      <div
+        class="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14"
+      >
+        <a
+          href="/"
+          class="flex items-center gap-2 font-bold text-lg no-underline"
+          style="color:#e6edf3;"
+        >
+          <span style="color:#ff2d55;">⬡</span>
+          <span>GitHub Risk Atlas</span>
+        </a>
+        <div class="flex items-center gap-6 text-sm" style="color:#8b949e;">
+          <a href="/" class="hover:text-white transition-colors">Overview</a>
+          <a href="/explorer" class="hover:text-white transition-colors"
+            >Explorer</a
+          >
+          <a href="/charts" class="hover:text-white transition-colors">Charts</a
+          >
+          <a href="/about" class="hover:text-white transition-colors">About</a>
+        </div>
+      </div>
+    </nav>
+
+    <slot />
+
+    <!-- Footer -->
+    <footer
+      style="border-top:1px solid #21262d; color:#8b949e;"
+      class="mt-24 py-12 text-sm text-center"
+    >
+      <p>
+        Scored by <strong style="color:#e6edf3;">Claude Opus 4.7</strong> (max thinking
+        mode) · 3,873 repositories · <a
+          href="/about"
+          style="color:#8b949e; text-decoration:underline;">methodology</a
+        >
+      </p>
+      <p class="mt-2">
+        <span style="color:#ff2d55;"
+          >For educational and security research purposes only.</span
+        >
+      </p>
+      <nav
+        class="mt-4 flex justify-center gap-6 text-xs"
+        style="color:#484f58;"
+        aria-label="Footer navigation"
+      >
+        <a href="/" class="hover:text-white transition-colors">Overview</a>
+        <a href="/explorer" class="hover:text-white transition-colors"
+          >Explorer</a
+        >
+        <a href="/charts" class="hover:text-white transition-colors">Charts</a>
+        <a href="/about" class="hover:text-white transition-colors">About</a>
+        <a href="/sitemap-index.xml" class="hover:text-white transition-colors"
+          >Sitemap</a
+        >
+      </nav>
+    </footer>
+  </body>
+</html>

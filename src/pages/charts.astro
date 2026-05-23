@@ -1,0 +1,23 @@
+---
+import Base from '../layouts/Base.astro';
+import { ALL_REPOS, STATS } from '../data/repos';
+import ChartsPage from '../components/ChartsPage';
+---
+
+<Base
+  title="Charts & Visualisations - GitHub Risk Atlas Security Dataset Analysis"
+  description="Interactive charts analysing 3,873 leaked GitHub-internal repositories: tier distribution, score histogram, category treemap, size vs severity scatter plot, score percentile curve, and org breakdown."
+  keywords="github security charts, repository risk visualisation, tier distribution chart, security score histogram, category treemap, scatter plot risk analysis, data visualisation cybersecurity"
+>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-10">
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold mb-2">Visual Analysis</h1>
+      <p style="color:#8b949e;">
+        Charts and visualisations across <strong style="color:#e6edf3;"
+          >{STATS.total.toLocaleString()}</strong
+        > repositories.
+      </p>
+    </div>
+    <ChartsPage repos={ALL_REPOS} stats={STATS} client:load />
+  </div>
+</Base>

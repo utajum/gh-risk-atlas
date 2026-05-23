@@ -1,0 +1,246 @@
+---
+import Base from '../layouts/Base.astro';
+import { STATS } from '../data/repos';
+---
+
+<Base
+  title="About - Methodology, Scoring Rubric & Dataset Generation"
+  description="How the GitHub Risk Atlas dataset was generated: 3,873 repositories scored by Claude Opus 4.7 (max thinking mode) in 40-repo batches across 4 parallel streaming sessions. Includes the full 6-tier severity rubric, calibration anchors, heuristics, and limitations."
+  keywords="claude opus methodology, AI security scoring, repository severity rubric, max thinking mode, batched streaming, security research methodology, dataset generation, tier classification, vulnerability scoring"
+>
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 py-16">
+    <h1 class="text-3xl font-bold mb-10">About the Dataset</h1>
+
+    <div class="space-y-10" style="color:#8b949e; line-height:1.8;">
+      <section>
+        <h2 class="text-xl font-semibold mb-4" style="color:#e6edf3;">
+          What is this?
+        </h2>
+        <p>
+          GitHub Risk Atlas is an AI-generated severity ranking of <strong
+            style="color:#e6edf3;"
+            >{STATS.total.toLocaleString()} leaked GitHub-internal repositories</strong
+          >. Each repository has been scored from 0–100 on how dangerous its
+          source code would be to <em>GitHub.com customers</em> if read by a sophisticated
+          attacker - i.e., how much it would help them steal customer data.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-xl font-semibold mb-4" style="color:#e6edf3;">
+          Scoring methodology
+        </h2>
+        <p>
+          Every repository was scored by <strong style="color:#e6edf3;"
+            >Claude Opus 4.7</strong
+          > running in <strong style="color:#e6edf3;"
+            >maximum thinking mode</strong
+          > (<code
+            class="px-1 py-0.5 rounded text-xs"
+            style="background:#161a22;color:#a29bfe;">--effort max</code
+          >). The model was given:
+        </p>
+        <ul class="mt-4 space-y-2 list-disc list-inside">
+          <li>A detailed 6-tier severity rubric</li>
+          <li>
+            ~30 calibration anchors (e.g. <code style="color:#ff2d55;"
+              >github - 100 S</code
+            >, <code style="color:#ff6b35;">octovault - 99 S</code>, <code
+              style="color:#a29bfe;">mona-sans - 5 E</code
+            >)
+          </li>
+          <li>Heuristics for common naming patterns</li>
+          <li>The repo name, archive size in bytes, and parent org</li>
+        </ul>
+        <p class="mt-4">
+          For each verdict the model returned: <code style="color:#26de81;"
+            >score</code
+          >, <code style="color:#26de81;">tier</code>, <code
+            style="color:#26de81;">category</code
+          >, and <code style="color:#26de81;">rationale</code> - enforced by a JSON
+          schema at the API level.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-xl font-semibold mb-4" style="color:#e6edf3;">
+          Processing pipeline
+        </h2>
+        <div
+          class="rounded-xl p-5 space-y-3 text-sm font-mono"
+          style="background:#111318;border:1px solid #21262d;"
+        >
+          <div>
+            <span style="color:#ff2d55;">1.</span> Parse <code>ls -la</code> dump
+            - <code>repos.tsv</code> (3,874 entries)
+          </div>
+          <div>
+            <span style="color:#ff6b35;">2.</span>
+            <code>score_repos_stream_parallel.py</code> - 4 workers, batch=40
+          </div>
+          <div>
+            <span style="color:#f7b731;">3.</span> Each batch: one stdin line - one
+            JSON array of 40 verdicts
+          </div>
+          <div>
+            <span style="color:#26de81;">4.</span> Per-worker session reset every
+            20 batches (~800 repos)
+          </div>
+          <div>
+            <span style="color:#45aaf2;">5.</span> Atomic fsync append to <code
+              >scores.jsonl</code
+            > per batch
+          </div>
+          <div>
+            <span style="color:#a29bfe;">6.</span> Rate-limit detection: parse reset
+            time, sleep until unlock
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
+          {
+            [
+              ['3,873', 'Repos scored'],
+              ['19.3 min', 'Total runtime'],
+              ['0', 'Failures'],
+              ['~$147', 'Added cost (batched)'],
+            ].map(([v, l]) => (
+              <div
+                class="rounded-lg p-4 text-center"
+                style="background:#111318;border:1px solid #21262d;">
+                <div class="text-2xl font-bold mb-1" style="color:#ff2d55;">
+                  {v}
+                </div>
+                <div class="text-xs" style="color:#8b949e;">
+                  {l}
+                </div>
+              </div>
+            ))
+          }
+        </div>
+      </section>
+
+      <section>
+        <h2 class="text-xl font-semibold mb-4" style="color:#e6edf3;">
+          Tier definitions
+        </h2>
+        <div class="space-y-3">
+          {
+            (
+              [
+                [
+                  'S',
+                  '95-100',
+                  '#ff2d55',
+                  'Crown Jewels',
+                  'Auth daemons, secret vaults, octocerts, token scanning, Rails monolith, JIT access provisioning.',
+                ],
+                [
+                  'A',
+                  '85-94',
+                  '#ff6b35',
+                  'Customer Data',
+                  'Billing, support tickets, audit logs, DMCA/law enforcement, DSR, package registries, runner admin.',
+                ],
+                [
+                  'B',
+                  '70-84',
+                  '#f7b731',
+                  'Core Infra',
+                  'Network, DNS, Kubernetes, hosted compute, git replication, log pipelines, service mesh.',
+                ],
+                [
+                  'C',
+                  '50-69',
+                  '#26de81',
+                  'Internal Tools',
+                  'Hubber tooling, Copilot subsystems, chatops, feature-flag platform.',
+                ],
+                [
+                  'D',
+                  '25-49',
+                  '#45aaf2',
+                  'Build & Docs',
+                  'Build tooling, dashboards, internal docs, employee tools with no sensitive data.',
+                ],
+                [
+                  'E',
+                  '1-24',
+                  '#a29bfe',
+                  'Low Risk',
+                  'Marketing, branding, fonts, demos, deprecated, personal scratch repos.',
+                ],
+              ] as const
+            ).map(([t, band, col, label, desc]) => (
+              <div
+                class="flex gap-4 p-4 rounded-lg"
+                style={`background:#111318;border-left:3px solid ${col};`}>
+                <div
+                  class="font-black text-2xl w-6 shrink-0"
+                  style={`color:${col};`}>
+                  {t}
+                </div>
+                <div>
+                  <div class="flex items-center gap-3 mb-1">
+                    <span class="font-semibold text-sm" style="color:#e6edf3;">
+                      {label}
+                    </span>
+                    <span
+                      class="text-xs px-2 py-0.5 rounded"
+                      style={`background:${col}22;color:${col};`}>
+                      {band}
+                    </span>
+                  </div>
+                  <p class="text-sm">{desc}</p>
+                </div>
+              </div>
+            ))
+          }
+        </div>
+      </section>
+
+      <section>
+        <h2 class="text-xl font-semibold mb-4" style="color:#e6edf3;">
+          Limitations
+        </h2>
+        <ul class="space-y-2 list-disc list-inside text-sm">
+          <li>
+            Scores are based on <strong style="color:#e6edf3;"
+              >repository names and archive sizes only</strong
+            > - no code was read.
+          </li>
+          <li>
+            Claude's reasoning is probabilistic; any individual score may be
+            miscalibrated.
+          </li>
+          <li>
+            Ambiguous 3-letter acronyms and codenames default to mid-tier
+            (40–60).
+          </li>
+          <li>
+            Scores reflect threat to <em>GitHub.com customers</em>, not GitHub
+            the company's operational security.
+          </li>
+        </ul>
+      </section>
+
+      <section
+        class="rounded-xl p-5"
+        style="background:rgba(255,45,85,0.05);border:1px solid rgba(255,45,85,0.2);"
+      >
+        <h2 class="text-xl font-semibold mb-3" style="color:#ff2d55;">
+          ⚠ Legal disclaimer
+        </h2>
+        <p class="text-sm">
+          This dataset and visualisation are provided for <strong
+            style="color:#e6edf3;"
+            >educational and security research purposes only</strong
+          >. The scores represent AI-generated inferences from repository names.
+          No source code was accessed or redistributed. If you are a GitHub
+          employee or security researcher, please follow responsible disclosure
+          procedures.
+        </p>
+      </section>
+    </div>
+  </div>
+</Base>
