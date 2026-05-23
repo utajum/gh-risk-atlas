@@ -1,8 +1,9 @@
 import {
   ScatterChart, Scatter, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
   BarChart, Bar, PieChart, Pie, RadarChart, PolarGrid, PolarAngleAxis, Radar,
-  Treemap, Legend, CartesianGrid,
+  Legend, CartesianGrid,
 } from 'recharts';
+import { ResponsiveTreeMap } from '@nivo/treemap';
 import type { Repo } from '../data/repos';
 import type { STATS } from '../data/repos';
 
@@ -142,15 +143,15 @@ function CategoryTreemap({ repos }: { repos: Repo[] }) {
     e.total += r.score; e.count++;
     m.set(r.category, e);
   }
-  const data = [...m.entries()]
+  const children = [...m.entries()]
     .filter(([, v]) => v.count >= 5)
     .map(([cat, { total, count }]) => ({
-      name: cat,
-      size: count,
+      id: cat,
+      value: count,
       avg: Math.round(total / count),
     }))
-    .sort((a, b) => b.size - a.size)
-    .slice(0, 40);
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 30);
 
   const getColor = (avg: number) => {
     if (avg >= 90) return '#ff2d55';
@@ -161,36 +162,45 @@ function CategoryTreemap({ repos }: { repos: Repo[] }) {
     return '#a29bfe';
   };
 
-  const CustomContent = (props: { x?: number; y?: number; width?: number; height?: number; name?: string; avg?: number }) => {
-    const { x = 0, y = 0, width = 0, height = 0, name, avg = 0 } = props;
-    if (width < 40 || height < 30) return null;
-    return (
-      <g>
-        <rect x={x+1} y={y+1} width={width-2} height={height-2} fill={getColor(avg)} opacity={0.7} rx={4} />
-        <text x={x + width/2} y={y + height/2 - 5} textAnchor="middle" fill="white" fontSize={Math.min(11, width/6)} fontWeight={600}>
-          {name && name.length > 14 ? name.slice(0, 12) + '…' : name}
-        </text>
-        <text x={x + width/2} y={y + height/2 + 9} textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize={10}>
-          {avg}%
-        </text>
-      </g>
-    );
-  };
-
   return (
-    <ResponsiveContainer width="100%" height={380}>
-      <Treemap
-        data={data}
-        dataKey="size"
-        aspectRatio={4/3}
-        stroke="#0a0b0e"
-        content={<CustomContent />}
-      >
-        <TT formatter={(v: number, _: string, p: { payload?: { name: string; avg: number } }) => [
-          `${v} repos · avg ${p.payload?.avg}%`, p.payload?.name ?? ''
-        ]} />
-      </Treemap>
-    </ResponsiveContainer>
+    <div style={{ width: '100%', height: 380 }}>
+      <ResponsiveTreeMap
+        data={{ name: 'categories', children }}
+        identity="id"
+        value="value"
+        valueFormat="d"
+        label="id"
+        margin={{ top: 0, right: 0, bottom: 0, left: 0 }}
+        colors={(d) => getColor((d.data as { avg: number }).avg)}
+        borderColor={{ from: 'color', modifiers: [['darker', 0.6]] }}
+        borderRadius={6}
+        padding={4}
+        innerPadding={2}
+        labelSkipSize={16}
+        enableLabel={true}
+        labelTextColor={{ from: 'color', modifiers: [['darker', 2.6]] }}
+        tooltip={({ node }) => (
+          <div style={{
+            background: '#161a22',
+            border: '1px solid #30363d',
+            borderRadius: 8,
+            padding: '8px 12px',
+            color: '#e6edf3',
+            fontSize: 13,
+            fontFamily: 'Inter, system-ui, sans-serif',
+          }}>
+            <div style={{ fontWeight: 700, marginBottom: 4 }}>{node.id}</div>
+            <div style={{ color: '#8b949e', fontSize: 12 }}>
+              {node.value} repos · avg {(node.data as { avg: number }).avg}%
+            </div>
+          </div>
+        )}
+        theme={{
+          labels: { text: { fontSize: 12, fontWeight: 700 } },
+          tooltip: { container: { background: '#161a22' } },
+        }}
+      />
+    </div>
   );
 }
 
