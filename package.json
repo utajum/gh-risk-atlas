@@ -31,5 +31,8 @@
       "@tailwindcss/oxide",
       "lightningcss"
     ]
+  },
+  "devDependencies": {
+    "canvas": "^3.2.3"
   }
 }
